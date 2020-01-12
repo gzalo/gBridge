@@ -118,7 +118,7 @@ redis_subscribe.on("pmessage", function (pattern, channel, message) {
 
         if (devicetrait === 'onoff') {
             if ('OnOff' in deviceinfo) {
-                mqtt.publish(`gBridge/u${userid}/${deviceinfo['OnOff']['actionTopic']}`, message);
+                mqtt.publish(deviceinfo['OnOff']['actionTopic'], message);
             } else {
                 mqtt.publish(`gBridge/u${userid}/d${deviceid}/${devicetrait}`, message);
             }
@@ -283,19 +283,7 @@ function getDevicesOfUser(userid, callback) {
 mqtt.on('message', function (topic, message) {
     message = message.toString();
 
-    topicinfo = guessUserIdFromMqttTopic(topic);
-    if (topicinfo['error-message'] != null) {
-        console.error(`Could not determine user in topic "${topic}": ${topicinfo['error-message']}`);
-        return;
-    }
-
-    let userid = topicinfo['user-id'];
-    let topicuserpart = topicinfo['user-custom-part'];
-
-    //Filter topic that were published by the script itself, just quietly return
-    if ((topicuserpart === 'd0/grequest') || (topicuserpart === 'd0/requestsync')) {
-        return;
-    }
+    let userid = 1;
 
     getDevicesOfUser(userid, function (err, devices) {
         //Check for error, abort if necessary
@@ -311,35 +299,21 @@ mqtt.on('message', function (topic, message) {
         for (var currentDeviceId in devices) {
             for (var currentTrait in devices[currentDeviceId]) {
                 //This script has published to the topic, since it is an action topic. Just quietly return
-                if (devices[currentDeviceId][currentTrait]['actionTopic'] === topicuserpart) {
+                if (devices[currentDeviceId][currentTrait]['actionTopic'] === topic) {
                     return;
                 }
 
                 //The topic was the actual status topic
-                if (devices[currentDeviceId][currentTrait]['statusTopic'] === topicuserpart) {
+                if (devices[currentDeviceId][currentTrait]['statusTopic'] === topic) {
                     deviceid = currentDeviceId;
                     devicetrait = currentTrait.toLowerCase();
                 }
             }
         }
 
-        //The topic wasn't found for the user
-        //special case: Power-Topics, are "gBrige/u<user-id>/d<device-id>/power"
-        if (!deviceid) {
-            var powerMatch = /^(?:d)([0-9]+)(?:\/power)/;
-            if (powerMatch.test(topicuserpart)) {
-                var matches = powerMatch.exec(topicuserpart);
-                if ((matches != null) && (matches.length == 2)) {
-                    //It is a standard "Power-Topic" that can't be changed by the user
-                    deviceid = matches[1];
-                    devicetrait = 'power';
-                }
-            }
-        }
-
         //Topic could still not be matched
         if (!deviceid) {
-            //console.error(`Could not match topic ${topicuserpart} for user ${userid}`);
+            console.error(`Could not match topic ${topic} for user ${userid}`);
             return;
         }
 
@@ -497,4 +471,4 @@ mqtt.on('message', function (topic, message) {
     });
 });
 //Subscribe to all topic that may fit
-mqtt.subscribe('gBridge/+/#');
+mqtt.subscribe('stat/+/#');
