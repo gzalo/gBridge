@@ -145,7 +145,7 @@
 
 				@if($trait->needsActionTopic)
 				<div class="col s11 offset-s1">
-					<b>Action Topic: </b> gBridge/u{{Auth::user()->user_id}}/
+					<b>Action Topic: </b> 
 					<div class="input-field inline">
 						<input type="text" class="validate" id="{{$trait->traittype_id . '-action'}}" name="action" size="100" value="{{ $trait->pivot->mqttActionTopic }}" required>
 						<label for="{{$trait->traittype_id . '-action'}}">Action Topic</label>
@@ -157,7 +157,7 @@
 
 				@if($trait->needsStatusTopic)
 				<div class="col s11 offset-s1">
-					<b>Status Topic: </b> gBridge/u{{Auth::user()->user_id}}/
+					<b>Status Topic: </b> 
 					<div class="input-field inline">
 						<input type="text" class="validate" id="{{$trait->traittype_id . '-status'}}" name="status" size="100" value="{{ $trait->pivot->mqttStatusTopic }}" required>
 						<label for="{{$trait->traittype_id . '-status'}}">Status Topic</label>
